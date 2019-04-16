@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@babel/runtime": "^7.4.3",
     "apollo-server-express": "^2.4.8",
     "express": "^4.16.4",
     "graphql": "^14.2.1",
@@ -20,6 +21,7 @@
   "devDependencies": {
     "@babel/cli": "^7.4.3",
     "@babel/core": "^7.4.3",
+    "@babel/plugin-transform-runtime": "^7.4.3",
     "@babel/preset-env": "^7.4.3"
   }
 }

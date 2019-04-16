@@ -1,7 +1,5 @@
+import db from '../db';
 
-// This is a (sample) collection of books we'll be able to query
-// the GraphQL server for.  A more complete example might fetch
-// from an existing data source like a REST API or database.
 const markets = [
   {
     uuid: '206c1363-4600-47b4-823b-aaec99844763',
@@ -42,8 +40,9 @@ const instruments = [
 
 export default {
   Query: {
-    markets(parent, args, context, info) {
-      return markets;
+    async markets(parent, args, context, info) {
+      const res = await db.query('SELECT * FROM markets');
+      return res.rows;
     },
   },
   Market: {

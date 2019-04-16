@@ -2,9 +2,11 @@ import express from 'express';
 import http from 'http';
 import { ApolloServer } from 'apollo-server-express';
 import schema from './graphql/schema';
+import context from './graphql/context';
 
 const apollo = new ApolloServer({ 
   schema,
+  context,
   playground: true
 });
 

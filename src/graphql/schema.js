@@ -19,8 +19,15 @@ const typeDefs = `
     market: Market!
   }
 
+  type User {
+    uuid: ID
+    first_name: String
+    last_name: String
+  }
+
   type Query {
     markets: [Market!]!
+    me: User
   }
 `;
 

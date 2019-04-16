@@ -9,6 +9,18 @@ export default {
       `);
       return res.rows;
     },
+    async me(parent, args, context, info) {
+      if (!context.claims || !context.claims.sub)
+        return null;
+
+      const res = await db.query(`
+        SELECT u.* 
+          FROM users u
+          WHERE u.uuid = $1::uuid;
+      `,
+      [context.claims.sub]);
+      return res.rows ? res.rows[0] : null;
+    },
   },
   Market: {
     async instruments({ uuid }, args, context, info) {
@@ -31,5 +43,8 @@ export default {
       [market_uuid]);
       return res.rows[0];
     }
+  },
+  User: {
+
   }
 };

@@ -49,7 +49,7 @@ export default {
     },
   },
   Market: {
-    instruments({ uuid }, args, context, info) {
+    async instruments({ uuid }, args, context, info) {
       const res = await db.query(`
         SELECT i.*
           FROM instruments i

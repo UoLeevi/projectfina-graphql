@@ -41,14 +41,22 @@ const instruments = [
 export default {
   Query: {
     async markets(parent, args, context, info) {
-      const res = await db.query('SELECT * FROM markets');
+      const res = await db.query(`
+        SELECT m.* 
+          FROM markets m;
+      `);
       return res.rows;
     },
   },
   Market: {
     instruments({ uuid }, args, context, info) {
-      return instruments
-        .filter(instrument => instrument.market_uuid === uuid);
+      const res = await db.query(`
+        SELECT i.*
+          FROM instruments i
+          WHERE i.market_uuid = $1::uuid;
+      `, 
+      [uuid]);
+      return res.rows;
     }
   },
   Instrument: {

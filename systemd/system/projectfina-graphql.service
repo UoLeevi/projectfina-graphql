@@ -1,0 +1,14 @@
+[Unit]
+Description=GraphQL server for projectfina.com
+StartLimitInterval=600
+StartLimitBurst=3
+
+[Service]
+WorkingDirectory=/usr/local/projectfina-graphql
+ExecStart=/usr/local/bin/node /usr/local/projectfina-graphql/lib/index.js
+Restart=always
+RestartSec=20
+User=www-data
+
+[Install]
+WantedBy=multi-user.target

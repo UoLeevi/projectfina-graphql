@@ -42,6 +42,26 @@ export default {
       `, 
       [market_uuid]);
       return res.rows[0];
+    },
+    async eod_quotes({ uuid }, args, context, info) {
+      const res = await db.query(`
+        SELECT e.*
+          FROM eod_quotes e
+          WHERE e.instrument_uuid = $1::uuid;
+      `, 
+      [uuid]);
+      return res.rows;
+    }
+  },
+  EodQuote: {
+    async instrument({ instrument_uuid }, args, context, info) {
+      const res = await db.query(`
+        SELECT i.*
+          FROM instruments i
+          WHERE i.uuid = $1::uuid;
+      `, 
+      [instrument_uuid]);
+      return res.rows[0];
     }
   },
   Watchlist: {

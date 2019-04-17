@@ -17,12 +17,25 @@ const typeDefs = `
     currency: String
     sector: String
     market: Market!
+    eod_quotes: [EodQuote!]
   }
 
   type Watchlist {
     uuid: ID
     name: String
     instruments: [Instrument!]!
+  }
+
+  Type EodQuote {
+    uuid: ID
+    instrument: Instrument!
+    date: String
+    price_open: Float
+    price_close: Float
+    price_high: Float
+    price_low: Float
+    turnover: Float
+    quantity: Float
   }
 
   type User {

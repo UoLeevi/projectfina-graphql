@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
-export async function context({ req }) {
-  const authorization = req.headers['authorization'] || null;
+export default async function ({ req }) {
+  const authorization = req.headers.authorization || null;
   const authToken = (authorization && authorization.startsWith('Bearer ')
     ? authorization.substring(7)
     : null);

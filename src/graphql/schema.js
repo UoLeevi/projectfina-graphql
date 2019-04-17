@@ -24,12 +24,19 @@ const typeDefs = `
     first_name: String
     last_name: String
     logins: [Login!]!
+    groups: [Group!]!
   }
 
   type Login {
     uuid: ID
     email: String
     user: User
+  }
+
+  type Group {
+    uuid: ID
+    name: String
+    users: [User!]!
   }
 
   type Query {

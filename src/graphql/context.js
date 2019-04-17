@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { readFileSync } from 'fs'; 
 
-let secret = readFileSync('/usr/local/projectfina-keys/secret').split('\n')[0];
+let secret = readFileSync('/usr/local/projectfina-keys/secret', 'utf8').split('\n')[0];
 
 export default async function ({ req }) {
   const authorization = req.headers.authorization || null;

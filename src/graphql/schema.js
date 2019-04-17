@@ -19,12 +19,19 @@ const typeDefs = `
     market: Market!
   }
 
+  type Watchlist {
+    uuid: ID
+    name: String
+    instruments: [Instrument!]!
+  }
+
   type User {
     uuid: ID
     first_name: String
     last_name: String
     logins: [Login!]!
     groups: [Group!]!
+    watchlists: [Watchlist!]!
   }
 
   type Login {

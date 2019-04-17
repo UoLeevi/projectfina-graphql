@@ -44,6 +44,18 @@ export default {
       return res.rows[0];
     }
   },
+  Watchlist: {
+    async instruments({ uuid }, args, context, info) {
+      const res = await db.query(`
+        SELECT i.*
+          FROM instruments i
+          LEFT JOIN instruments_x_watchlists i_x_w ON i.uuid = i_x_w.instrument_uuid
+          WHERE i_x_w.watchlist_uuid = $1::uuid;
+      `, 
+      [uuid]);
+      return res.rows;
+    }
+  },
   User: {
     async logins({ uuid }, args, context, info) {
       const res = await db.query(`
@@ -60,6 +72,16 @@ export default {
           FROM groups g
           LEFT JOIN users_x_groups u_x_g ON g.uuid = u_x_g.group_uuid
           WHERE u_x_g.user_uuid = $1::uuid;
+      `, 
+      [uuid]);
+      return res.rows;
+    },
+    async watchlists({ uuid }, args, context, info) {
+      const res = await db.query(`
+        SELECT w.*
+          FROM watchlists w
+          LEFT JOIN users_x_watchlists u_x_w ON u.uuid = u_x_w.user_uuid
+          WHERE u_x_w.user_uuid = $1::uuid;
       `, 
       [uuid]);
       return res.rows;

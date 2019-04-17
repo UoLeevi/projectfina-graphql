@@ -26,7 +26,7 @@ const typeDefs = `
     instruments: [Instrument!]!
   }
 
-  Type EodQuote {
+  type EodQuote {
     uuid: ID
     instrument: Instrument!
     date: String

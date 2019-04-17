@@ -80,7 +80,7 @@ export default {
       const res = await db.query(`
         SELECT w.*
           FROM watchlists w
-          LEFT JOIN users_x_watchlists u_x_w ON u.uuid = u_x_w.user_uuid
+          LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
           WHERE u_x_w.user_uuid = $1::uuid;
       `, 
       [uuid]);

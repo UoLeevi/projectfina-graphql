@@ -23,6 +23,13 @@ const typeDefs = `
     uuid: ID
     first_name: String
     last_name: String
+    logins: [Login!]!
+  }
+
+  type Login {
+    uuid: ID
+    email: String
+    user: User
   }
 
   type Query {

@@ -45,6 +45,25 @@ export default {
     }
   },
   User: {
-
+    async logins({ uuid }, args, context, info) {
+      const res = await db.query(`
+        SELECT l.*
+          FROM logins l
+          WHERE l.user_uuid = $1::uuid;
+      `, 
+      [uuid]);
+      return res.rows;
+    }
+  },
+  Login: {
+    async user({ user_uuid }, args, context, info) {
+      const res = await db.query(`
+        SELECT u.*
+          FROM user u
+          WHERE u.uuid = $1::uuid;
+      `, 
+      [user_uuid]);
+      return res.rows[0];
+    }
   }
 };

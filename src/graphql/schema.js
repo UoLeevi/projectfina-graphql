@@ -8,7 +8,7 @@ const typeDefs = `
     uuid: ID
     name: String
     mic: String
-    instruments: [Instrument!]!
+    instruments(uuid: ID): [Instrument!]!
   }
 
   type Instrument {
@@ -25,7 +25,7 @@ const typeDefs = `
   type Watchlist {
     uuid: ID
     name: String
-    instruments: [Instrument!]!
+    instruments(uuid: ID): [Instrument!]!
   }
 
   type EodQuote {
@@ -44,9 +44,9 @@ const typeDefs = `
     uuid: ID
     first_name: String
     last_name: String
-    logins: [Login!]!
-    groups: [Group!]!
-    watchlists: [Watchlist!]!
+    logins(uuid: ID): [Login!]!
+    groups(uuid: ID): [Group!]!
+    watchlists(uuid: ID): [Watchlist!]!
   }
 
   type Login {
@@ -58,11 +58,12 @@ const typeDefs = `
   type Group {
     uuid: ID
     name: String
-    users: [User!]!
+    users(uuid: ID): [User!]!
   }
 
   type Query {
-    markets: [Market!]!
+    instruments(uuid: ID): [Instrument!]!
+    markets(uuid: ID): [Market!]!
     me: User
   }
 `;

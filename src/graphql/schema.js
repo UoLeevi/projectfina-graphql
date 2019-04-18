@@ -2,6 +2,8 @@ import { makeExecutableSchema } from 'graphql-tools';
 import resolvers from './resolvers';
 
 const typeDefs = `
+  scalar Date
+
   type Market {
     uuid: ID
     name: String
@@ -29,7 +31,7 @@ const typeDefs = `
   type EodQuote {
     uuid: ID
     instrument: Instrument!
-    date: String
+    date: Date
     price_open: Float
     price_close: Float
     price_high: Float

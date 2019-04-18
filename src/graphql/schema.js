@@ -63,7 +63,7 @@ const typeDefs = `
   }
 
   type Query {
-    lastEodQuotes: [EodQuote!]!
+    latestEodQuotes: [EodQuote!]!
     markets: [Market!]!
     me: User
   }

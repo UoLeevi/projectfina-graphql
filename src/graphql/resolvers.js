@@ -4,13 +4,6 @@ import db from '../db';
 
 export default {
   Query: {
-    async latestEodQuotes(parent, args, context, info) {
-      const res = await db.query(`
-        SELECT l.*
-          FROM latest_eod_quotes l;
-      `);
-      return res.rows;
-    },
     async markets(parent, args, context, info) {
       const res = await db.query(`
         SELECT m.* 
@@ -52,13 +45,14 @@ export default {
       [market_uuid]);
       return res.rows[0];
     },
-    async eod_quotes({ uuid }, args, context, info) {
+    async eod_quotes({ uuid }, { last, offset }, context, info) {
       const res = await db.query(`
         SELECT e.*
           FROM eod_quotes e
-          WHERE e.instrument_uuid = $1::uuid;
+          WHERE e.instrument_uuid = $1::uuid
+          LIMIT $2::integer OFFSET $3::integer;
       `, 
-      [uuid]);
+      [uuid, last, offset]);
       return res.rows;
     }
   },

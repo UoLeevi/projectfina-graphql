@@ -19,7 +19,7 @@ const typeDefs = `
     currency: String
     sector: String
     market: Market!
-    eod_quotes: [EodQuote!]
+    eod_quotes(last: Int = 0, offset: Int = 0): [EodQuote!]
   }
 
   type Watchlist {
@@ -38,7 +38,6 @@ const typeDefs = `
     price_low: Float
     turnover: Float
     quantity: Float
-    prev_price_close: Float
   }
 
   type User {
@@ -63,7 +62,6 @@ const typeDefs = `
   }
 
   type Query {
-    latestEodQuotes: [EodQuote!]!
     markets: [Market!]!
     me: User
   }

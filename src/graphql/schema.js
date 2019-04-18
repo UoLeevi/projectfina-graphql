@@ -38,6 +38,7 @@ const typeDefs = `
     price_low: Float
     turnover: Float
     quantity: Float
+    prev_price_close: Float
   }
 
   type User {

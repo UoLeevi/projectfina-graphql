@@ -4,6 +4,14 @@ import db from '../db';
 
 export default {
   Query: {
+    async lastEodQuotes(parent, args, context, info) {
+      const res = await db.query(`
+        SELECT DISTINCT ON (e.instrument_uuid) e.*
+          FROM eod_quotes e
+          ORDER BY e.instrument_uuid, e.date DESC;
+      `);
+      return res.rows;
+    },
     async markets(parent, args, context, info) {
       const res = await db.query(`
         SELECT m.* 

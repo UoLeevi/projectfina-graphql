@@ -4,13 +4,17 @@ import db from '../db';
 
 export default {
   Query: {
-    async markets(obj, { uuid }, context, info) {
+    async markets(obj, { uuid, mic }, context, info) {
       const res = await db.query(`
         SELECT m.* 
           FROM markets m
-          ${ uuid ? 'WHERE m.uuid = $1::uuid' : '' };
+          ${ uuid 
+            ? 'WHERE m.uuid = $1::uuid' 
+            : mic
+              ? 'WHERE m.mic = $1::text'
+              : '' };
         `,
-        uuid ? [uuid] : undefined);
+        uuid ? [uuid] : mic ? [mic] : undefined);
       return res.rows;
     },
     async instruments(obj, { uuid }, context, info) {

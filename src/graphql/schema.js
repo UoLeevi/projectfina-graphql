@@ -63,7 +63,7 @@ const typeDefs = `
 
   type Query {
     instruments(uuid: ID): [Instrument!]!
-    markets(uuid: ID): [Market!]!
+    markets(uuid: ID, mic: String): [Market!]!
     me: User
   }
 `;

@@ -67,6 +67,7 @@ export default {
           FROM eod_quotes e
           WHERE e.instrument_uuid = $1::uuid
           ${ uuid ? 'AND e.uuid = $4::uuid' : '' }
+          ORDER BY e.date DESC
           LIMIT $2::integer OFFSET $3::integer;
         `, 
         uuid ? [instrument.uuid, last, offset, uuid] : [instrument.uuid, last, offset]);

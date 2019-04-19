@@ -45,7 +45,7 @@ export default {
         SELECT i.*
           FROM instruments i
           WHERE i.market_uuid = $1::uuid
-          ${uuid ? 'AND i.uuid = $2::uuid' : '' };
+          ${ uuid ? 'AND i.uuid = $2::uuid' : '' };
         `,
         uuid ? [market.uuid, uuid] : [market.uuid]);
       return res.rows;
@@ -91,7 +91,7 @@ export default {
           FROM instruments i
           LEFT JOIN instruments_x_watchlists i_x_w ON i.uuid = i_x_w.instrument_uuid
           WHERE i_x_w.watchlist_uuid = $1::uuid
-          ${uuid ? 'AND i.uuid = $2::uuid' : '' };
+          ${ uuid ? 'AND i.uuid = $2::uuid' : '' };
         `, 
         uuid ? [watchlist.uuid, uuid] : [watchlist.uuid]);
       return res.rows;
@@ -103,9 +103,9 @@ export default {
         SELECT l.*
           FROM logins l
           WHERE l.user_uuid = $1::uuid
-          ${uuid ? 'AND l.uuid = $2::uuid' : '' };
+          ${ uuid ? 'AND l.uuid = $2::uuid' : '' };
         `, 
-        uuid ? [user.uuid] : [user.uuid, uuid]);
+        uuid ? [user.uuid, uuid] : [user.uuid]);
       return res.rows;
     },
     async groups(user, { uuid }, context, info) {
@@ -114,9 +114,9 @@ export default {
           FROM groups g
           LEFT JOIN users_x_groups u_x_g ON g.uuid = u_x_g.group_uuid
           WHERE u_x_g.user_uuid = $1::uuid
-          ${uuid ? 'AND g.uuid = $2::uuid' : '' };
+          ${ uuid ? 'AND g.uuid = $2::uuid' : '' };
         `, 
-        uuid ? [user.uuid] : [user.uuid, uuid]);
+        uuid ? [user.uuid, uuid] : [user.uuid]);
       return res.rows;
     },
     async watchlists(user, { uuid }, context, info) {
@@ -125,9 +125,9 @@ export default {
           FROM watchlists w
           LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
           WHERE u_x_w.user_uuid = $1::uuid
-          ${uuid ? 'AND w.uuid = $2::uuid' : '' };
+          ${ uuid ? 'AND w.uuid = $2::uuid' : '' };
         `, 
-        uuid ? [user.uuid] : [user.uuid, uuid]);
+        uuid ? [user.uuid, uuid] : [user.uuid]);
       return res.rows;
     }
   },
@@ -149,7 +149,7 @@ export default {
           FROM users u
           LEFT JOIN users_x_groups u_x_g ON u.uuid = u_x_g.user_uuid
           WHERE u_x_g.group_uuid = $1::uuid
-          ${uuid ? 'AND u.uuid = $2::uuid' : '' };
+          ${ uuid ? 'AND u.uuid = $2::uuid' : '' };
         `, 
         uuid ? [group.uuid, uuid] : [group.uuid]);
       return res.rows;

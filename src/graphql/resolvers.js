@@ -112,7 +112,7 @@ export default {
     async groups(user, { uuid }, context, info) {
       const res = await db.query(`
         SELECT u_x_g.*
-          FROM users_x_groups u_x_g ON g.uuid = u_x_g.group_uuid
+          FROM users_x_groups u_x_g
           WHERE u_x_g.user_uuid = $1::uuid
           ${ uuid ? 'AND u_x_g.group_uuid = $2::uuid' : '' };
         `, 
@@ -146,7 +146,7 @@ export default {
     async members(group, { uuid }, context, info) {
       const res = await db.query(`
         SELECT u_x_g.*
-          FROM users_x_groups u_x_g ON u.uuid = u_x_g.user_uuid
+          FROM users_x_groups u_x_g
           WHERE u_x_g.group_uuid = $1::uuid
           ${ uuid ? 'AND u_x_g.user_uuid = $2::uuid' : '' };
         `, 

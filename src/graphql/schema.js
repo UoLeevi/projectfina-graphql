@@ -45,7 +45,7 @@ const typeDefs = `
     first_name: String
     last_name: String
     logins(uuid: ID): [Login!]!
-    groups(uuid: ID): [GroupMembership!]!
+    memberships(uuid: ID): [GroupMembership!]!
     watchlists(uuid: ID): [Watchlist!]!
   }
 
@@ -58,7 +58,7 @@ const typeDefs = `
   type Group {
     uuid: ID!
     name: String
-    members(uuid: ID): [GroupMembership!]!
+    memberships(uuid: ID): [GroupMembership!]!
   }
 
   type GroupMembership {

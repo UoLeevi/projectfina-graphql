@@ -109,15 +109,32 @@ export default {
         uuid ? [user.uuid, uuid] : [user.uuid]);
       return res.rows;
     },
-    async groups(user, { uuid }, context, info) {
-      const res = await db.query(`
-        SELECT u_x_g.*
-          FROM users_x_groups u_x_g
-          WHERE u_x_g.user_uuid = $1::uuid
-          ${ uuid ? 'AND u_x_g.group_uuid = $2::uuid' : '' };
-        `, 
-        uuid ? [user.uuid, uuid] : [user.uuid]);
-      return res.rows;
+    async memberships(user, args, context, info) {
+      if (user.uuid === context.claims.sub) 
+      {
+        const res = await db.query(`
+          SELECT u_x_g.*
+            FROM users_x_groups u_x_g
+            WHERE u_x_g.user_uuid = $1::uuid
+            ${ uuid ? 'AND u_x_g.group_uuid = $2::uuid' : '' };
+          `, 
+          uuid ? [user.uuid, uuid] : [user.uuid]);
+        return res.rows;
+      } 
+      else
+      {
+        const res = await db.query(`
+          SELECT u_x_g.*
+            FROM users_x_groups u_x_g
+            JOIN users_x_groups my_u_x_g ON u_x_g.group_uuid = my_u_x_g.group_uuid
+            WHERE u_x_g.user_uuid = $1::uuid
+            AND my_u_x_g.user_uuid = $2::uuid
+            AND (my_u_x_g.permission_mask & B'00000010'::bit(8)) != 0
+            ${ uuid ? 'AND u_x_g.group_uuid = $3::uuid' : '' };
+          `, 
+          uuid ? [user.uuid, context.claims.sub, uuid] : [user.uuid, context.claims.sub]);
+        return res.rows;
+      }
     },
     async watchlists(user, { uuid }, context, info) {
       const res = await db.query(`
@@ -143,15 +160,32 @@ export default {
     }
   },
   Group: {
-    async members(group, { uuid }, context, info) {
-      const res = await db.query(`
-        SELECT u_x_g.*
-          FROM users_x_groups u_x_g
-          WHERE u_x_g.group_uuid = $1::uuid
-          ${ uuid ? 'AND u_x_g.user_uuid = $2::uuid' : '' };
-        `, 
-        uuid ? [group.uuid, uuid] : [group.uuid]);
-      return res.rows;
+    async memberships(group, { uuid }, context, info) {
+      if (user.uuid === context.claims.sub) 
+      {
+        const res = await db.query(`
+          SELECT u_x_g.*
+            FROM users_x_groups u_x_g
+            WHERE u_x_g.group_uuid = $1::uuid
+            ${ uuid ? 'AND u_x_g.user_uuid = $2::uuid' : '' };
+          `, 
+          uuid ? [group.uuid, uuid] : [group.uuid]);
+        return res.rows;
+      } 
+      else
+      {
+        const res = await db.query(`
+          SELECT u_x_g.*
+            FROM users_x_groups u_x_g
+            JOIN users_x_groups my_u_x_g ON u_x_g.group_uuid = my_u_x_g.group_uuid
+            WHERE u_x_g.group_uuid = $1::uuid
+            AND my_u_x_g.user_uuid = $2::uuid
+            AND (my_u_x_g.permission_mask & B'00000010'::bit(8)) != 0
+            ${ uuid ? 'AND u_x_g.user_uuid = $3::uuid' : '' };
+          `, 
+          uuid ? [group.uuid, context.claims.sub, uuid] : [group.uuid, context.claims.sub]);
+        return res.rows;
+      }
     }
   },
   GroupMembership: {

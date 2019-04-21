@@ -58,7 +58,7 @@ const typeDefs = `
   type Group {
     uuid: ID!
     name: String
-    memberships(uuid: ID): [GroupMembership!]!
+    memberships(uuid: ID): [GroupMembership!]
   }
 
   type GroupMembership {

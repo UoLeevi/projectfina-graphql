@@ -111,11 +111,10 @@ export default {
     },
     async groups(user, { uuid }, context, info) {
       const res = await db.query(`
-        SELECT g.*
-          FROM groups g
-          LEFT JOIN users_x_groups u_x_g ON g.uuid = u_x_g.group_uuid
+        SELECT u_x_g.*
+          FROM users_x_groups u_x_g ON g.uuid = u_x_g.group_uuid
           WHERE u_x_g.user_uuid = $1::uuid
-          ${ uuid ? 'AND g.uuid = $2::uuid' : '' };
+          ${ uuid ? 'AND u_x_g.group_uuid = $2::uuid' : '' };
         `, 
         uuid ? [user.uuid, uuid] : [user.uuid]);
       return res.rows;
@@ -144,16 +143,35 @@ export default {
     }
   },
   Group: {
-    async users(group, { uuid }, context, info) {
+    async members(group, { uuid }, context, info) {
       const res = await db.query(`
-        SELECT u.*
-          FROM users u
-          LEFT JOIN users_x_groups u_x_g ON u.uuid = u_x_g.user_uuid
+        SELECT u_x_g.*
+          FROM users_x_groups u_x_g ON u.uuid = u_x_g.user_uuid
           WHERE u_x_g.group_uuid = $1::uuid
-          ${ uuid ? 'AND u.uuid = $2::uuid' : '' };
+          ${ uuid ? 'AND u_x_g.user_uuid = $2::uuid' : '' };
         `, 
         uuid ? [group.uuid, uuid] : [group.uuid]);
       return res.rows;
+    }
+  },
+  GroupMembership: {
+    async user(user_x_group, args, context, info) {
+      const res = await db.query(`
+        SELECT u.*
+          FROM users u
+          WHERE u.uuid = $1::uuid;
+        `, 
+        [user_x_group.user_uuid]);
+      return res.rows[0];
+    },
+    async group(user_x_group, args, context, info) {
+      const res = await db.query(`
+        SELECT g.*
+          FROM groups g
+          WHERE g.uuid = $1::uuid;
+        `, 
+        [user_x_group.group_uuid]);
+      return res.rows[0];
     }
   },
   Date: new GraphQLScalarType({

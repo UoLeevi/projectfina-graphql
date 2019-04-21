@@ -5,14 +5,14 @@ const typeDefs = `
   scalar Date
 
   type Market {
-    uuid: ID
+    uuid: ID!
     name: String
     mic: String
     instruments(uuid: ID): [Instrument!]!
   }
 
   type Instrument {
-    uuid: ID
+    uuid: ID!
     symbol: String
     name: String
     isin: String
@@ -23,13 +23,13 @@ const typeDefs = `
   }
 
   type Watchlist {
-    uuid: ID
+    uuid: ID!
     name: String
     instruments(uuid: ID): [Instrument!]!
   }
 
   type EodQuote {
-    uuid: ID
+    uuid: ID!
     instrument: Instrument!
     date: Date
     price_open: Float
@@ -41,24 +41,30 @@ const typeDefs = `
   }
 
   type User {
-    uuid: ID
+    uuid: ID!
     first_name: String
     last_name: String
     logins(uuid: ID): [Login!]!
-    groups(uuid: ID): [Group!]!
+    groups(uuid: ID): [GroupMembership!]!
     watchlists(uuid: ID): [Watchlist!]!
   }
 
   type Login {
-    uuid: ID
+    uuid: ID!
     email: String
     user: User
   }
 
   type Group {
-    uuid: ID
+    uuid: ID!
     name: String
-    users(uuid: ID): [User!]!
+    members(uuid: ID): [GroupMembership!]!
+  }
+
+  type GroupMembership {
+    permission_mask: Int!
+    group: Group!
+    user: User!
   }
 
   type Query {

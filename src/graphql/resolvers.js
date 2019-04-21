@@ -129,7 +129,7 @@ export default {
             JOIN users_x_groups my_u_x_g ON u_x_g.group_uuid = my_u_x_g.group_uuid
             WHERE u_x_g.user_uuid = $1::uuid
             AND my_u_x_g.user_uuid = $2::uuid
-            AND (my_u_x_g.permission_mask & B'00000010'::bit(8)) & B'00000010'::bit(8)
+            AND (my_u_x_g.permission_mask & B'00000010'::bit(8))::int != 0
             ${ uuid ? 'AND u_x_g.group_uuid = $3::uuid' : '' };
           `, 
           uuid ? [user.uuid, context.claims.sub, uuid] : [user.uuid, context.claims.sub]);
@@ -167,7 +167,7 @@ export default {
             FROM users_x_groups u_x_g
             WHERE u_x_g.group_uuid = $1::uuid
             AND u_x_g.user_uuid = $2::uuid
-            AND (u_x_g.permission_mask & B'00000010'::bit(8) & B'00000010'::bit(8));
+            AND (u_x_g.permission_mask & B'00000010'::bit(8))::int != 0);
         `, 
         [group.uuid, context.claims.sub]);
 

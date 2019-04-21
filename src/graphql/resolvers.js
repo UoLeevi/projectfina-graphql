@@ -109,7 +109,7 @@ export default {
         uuid ? [user.uuid, uuid] : [user.uuid]);
       return res.rows;
     },
-    async memberships(user, args, context, info) {
+    async memberships(user, { uuid }, context, info) {
       if (user.uuid === context.claims.sub) 
       {
         const res = await db.query(`

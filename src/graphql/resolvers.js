@@ -201,16 +201,18 @@ export default {
       if (connection.user_uuid === context.claims.sub) 
       {
         const res = await db.query(`
-          SELECT DISTINCT ON (w.uuid)
-            w.uuid watchlist_uuid,
-            COALESCE(u_x_g.permission_mask, B'00000000'::bit(8)) & COALESCE(g_x_w.permission_mask, B'00000000'::bit(8)) | COALESCE(u_x_w.permission_mask, B'00000000'::bit(8)) permission_mask
-            FROM watchlists w
-            LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid
-            LEFT JOIN users_x_groups u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
-            FULL JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid AND u_x_w.user_uuid = u_x_g.user_uuid
-            WHERE u_x_w.user_uuid = $1::uuid OR u_x_g.user_uuid = $1::uuid
+          SELECT DISTINCT ON (w.watchlist_uuid, w.user_uuid)
+            w.watchlist_uuid, w.user_uuid, w.permission_mask
+            FROM (
+              (SELECT g_x_w.watchlist_uuid, u_x_g.user_uuid, u_x_g.permission_mask & g_x_w.permission_mask permission_mask
+                FROM users_x_groups u_x_g
+                JOIN groups_x_watchlists g_x_w ON u_x_g.group_uuid = g_x_w.group_uuid)
+              UNION ALL
+              (SELECT u_x_w.watchlist_uuid, u_x_w.user_uuid, u_x_w.permission_mask
+                FROM users_x_watchlists u_x_w)) w
+            WHERE w.user_uuid = $1::uuid
             ${ uuid ? 'AND w.uuid = $2::uuid' : '' }
-            ORDER BY w.uuid, (COALESCE(u_x_g.permission_mask, B'00000000'::bit(8)) & COALESCE(g_x_w.permission_mask, B'00000000'::bit(8)) | COALESCE(u_x_w.permission_mask, B'00000000'::bit(8)))::int DESC;
+            ORDER BY w.watchlist_uuid, w.user_uuid, w.permission_mask DESC;
           `, 
           uuid 
             ? [connection.user_uuid, uuid] 
@@ -220,31 +222,38 @@ export default {
       else
       {
         const res = await db.query(`
-          SELECT DISTINCT ON (w.uuid)
-            w.uuid watchlist_uuid,
-            COALESCE(u_x_g.permission_mask, B'00000000'::bit(8)) & COALESCE(g_x_w.permission_mask, B'00000000'::bit(8)) | COALESCE(u_x_w.permission_mask, B'00000000'::bit(8)) permission_mask
+          SELECT DISTINCT ON (w.watchlist_uuid, w.user_uuid)
+            w.watchlist_uuid, w.user_uuid, w.permission_mask
             FROM (
-              SELECT DISTINCT ON (w.uuid)
-                w.uuid
-                FROM watchlists w
-                LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid
-                LEFT JOIN users_x_groups u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
-                FULL JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid AND u_x_w.user_uuid = u_x_g.user_uuid
-                WHERE (u_x_w.user_uuid = $2::uuid OR u_x_g.user_uuid = $2::uuid)
-                AND ((COALESCE(u_x_g.permission_mask, B'00000000'::bit(8)) & COALESCE(g_x_w.permission_mask, B'00000000'::bit(8)) | COALESCE(u_x_w.permission_mask, B'00000000'::bit(8))) & B'00000011'::bit(8))::int != 0
-                ORDER BY w.uuid
-              ) w
-            LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid
-            LEFT JOIN (
-              SELECT u_x_g.*
-                FROM users_x_groups u_x_g
-                JOIN users_x_groups my_u_x_g ON u_x_g.group_uuid = my_u_x_g.group_uuid
-                WHERE my_u_x_g.user_uuid = $2::uuid
-              ) u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
-            FULL JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid AND u_x_w.user_uuid = u_x_g.user_uuid
-            WHERE u_x_w.user_uuid = $1::uuid OR u_x_g.user_uuid = $1::uuid
+              (SELECT g_x_w.watchlist_uuid, u_x_g.user_uuid, u_x_g.permission_mask & g_x_w.permission_mask permission_mask
+                FROM (
+                  SELECT u_x_g.*
+                    FROM users_x_groups u_x_g
+                    JOIN users_x_groups my_u_x_g ON u_x_g.group_uuid = my_u_x_g.group_uuid
+                    WHERE my_u_x_g.user_uuid = $2::uuid
+                    AND (my_u_x_g.permission_mask & B'00000011'::bit(8))::int != 0
+                  ) u_x_g
+                JOIN groups_x_watchlists g_x_w ON u_x_g.group_uuid = g_x_w.group_uuid)
+              UNION ALL
+              (SELECT u_x_w.watchlist_uuid, u_x_w.user_uuid, u_x_w.permission_mask
+                FROM users_x_watchlists u_x_w)) w
+            JOIN (
+              SELECT DISTINCT ON (w.watchlist_uuid, w.user_uuid)
+                w.watchlist_uuid, w.user_uuid, w.permission_mask
+                FROM (
+                  (SELECT g_x_w.watchlist_uuid, u_x_g.user_uuid, u_x_g.permission_mask & g_x_w.permission_mask permission_mask
+                    FROM users_x_groups u_x_g
+                    JOIN groups_x_watchlists g_x_w ON u_x_g.group_uuid = g_x_w.group_uuid)
+                  UNION ALL
+                  (SELECT u_x_w.watchlist_uuid, u_x_w.user_uuid, u_x_w.permission_mask
+                    FROM users_x_watchlists u_x_w)) w
+                WHERE w.user_uuid = $2::uuid
+                ORDER BY w.watchlist_uuid, w.user_uuid, w.permission_mask DESC
+              ) my_w ON w.watchlist_uuid = my_w.watchlist_uuid
+            WHERE w.user_uuid = $1::uuid
+            AND (my_w.permission_mask & B'00000011'::bit(8))::int != 0
             ${ uuid ? 'AND w.uuid = $3::uuid' : '' }
-            ORDER BY w.uuid, (COALESCE(u_x_g.permission_mask, B'00000000'::bit(8)) & COALESCE(g_x_w.permission_mask, B'00000000'::bit(8)) | COALESCE(u_x_w.permission_mask, B'00000000'::bit(8)))::int DESC;
+            ORDER BY w.watchlist_uuid, w.user_uuid, w.permission_mask DESC;
           `, 
           uuid 
             ? [connection.user_uuid, context.claims.sub, uuid] 

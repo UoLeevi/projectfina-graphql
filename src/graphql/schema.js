@@ -42,6 +42,10 @@ const typeDefs = `
     instruments(uuid: ID): [Instrument!]!
   }
 
+  input WatchlistInput {
+    name: String!
+  }
+
   type EodQuote {
     uuid: ID!
     instrument: Instrument!
@@ -120,6 +124,10 @@ const typeDefs = `
     instruments(uuid: ID): [Instrument!]!
     markets(uuid: ID, mic: String): [Market!]!
     me: User
+  }
+
+  type Mutation {
+    createWatchlist(watchlist: WatchlistInput!): Watchlist
   }
 `;
 

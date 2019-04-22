@@ -39,6 +39,36 @@ export default {
       return res.rows ? res.rows[0] : null;
     },
   },
+  Mutation: {
+    async createWatchlist(obj, { watchlistInput }, context, info) {
+      if (!context.claims || !context.claims.sub)
+        return null;
+
+      let res = await db.query(`
+        WITH watchlist AS (
+          INSERT INTO watchlists (name, created_by_user_uuid) 
+            VALUES ($2::text, $1::uuid) 
+            RETURNING *
+          )
+          INSERT INTO users_x_watchlists (user_uuid, watchlist_uuid, permission_mask)
+            SELECT $1::uuid, uuid, B'11111111'::bit(8)
+            FROM watchlist
+            RETURNING watchlist_uuid;
+        `, 
+        [context.claims.sub, watchlistInput.name]);
+
+      const uuid = res.rows[0];
+
+      res = await db.query(`
+        SELECT w.* 
+          FROM watchlists w
+          WHERE w.uuid = $1::uuid;
+        `, 
+        [uuid]);
+
+      return res.rows[0];
+    }
+  },
   Market: {
     async instruments(market, { uuid }, context, info) {
       const res = await db.query(`

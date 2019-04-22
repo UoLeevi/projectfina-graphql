@@ -302,7 +302,7 @@ export default {
           FROM watchlists w
           WHERE w.uuid = $1::uuid;
         `,
-        [edge.user_uuid]);
+        [edge.watchlist_uuid]);
       return { ...res.rows[0], type: "Watchlist" };
     }
   },

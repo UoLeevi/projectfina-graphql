@@ -202,13 +202,13 @@ export default {
                 LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid
                 LEFT JOIN users_x_groups u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
                 WHERE u_x_w.user_uuid = $2::uuid OR u_x_g.user_uuid = $2::uuid
-                AND (my_permission_mask & B'00000011'::bit(8))::int != 0 
                 ORDER BY watchlist_uuid, my_permission_mask DESC
               ) w
             LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
             LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid
             LEFT JOIN users_x_groups u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
             WHERE u_x_w.user_uuid = $1::uuid OR u_x_g.user_uuid = $1::uuid
+            AND (w.my_permission_mask & B'00000011'::bit(8))::int != 0 
             ${ uuid ? 'AND w.uuid = $3::uuid' : '' }
             ORDER BY watchlist_uuid, permission_mask DESC;
           `, 

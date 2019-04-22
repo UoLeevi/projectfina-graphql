@@ -189,9 +189,10 @@ export default {
     async usersConnection(group, args, context, info) {
       const canRead = await db.query(`
         SELECT EXISTS(
-          SELECT 1 FROM users_x_groups u_x_g
+          SELECT 1 
+          FROM users_x_groups u_x_g
           WHERE u_x_g.group_uuid = $1::uuid
-          AND u_x_g.user_uuid = $2:uuid
+          AND u_x_g.user_uuid = $2::uuid
           AND (u_x_g.permission_mask & B'00000010'::bit(8))::int != 0);
         `, 
         [group.uuid, context.claims.sub]);

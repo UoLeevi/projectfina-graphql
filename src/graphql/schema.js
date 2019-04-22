@@ -4,6 +4,20 @@ import resolvers from './resolvers';
 const typeDefs = `
   scalar Date
 
+  interface Node {
+    uuid: ID!
+    name: String!
+  }
+
+  interface Connection {
+    edges: [Edge!]!
+  }
+
+  interface Edge {
+    cursor: String
+    node: Node!
+  }
+
   type Market {
     uuid: ID!
     name: String
@@ -40,13 +54,24 @@ const typeDefs = `
     quantity: Float
   }
 
-  type User {
+  type User implements Node {
     uuid: ID!
+    name: String!
     first_name: String
     last_name: String
     logins(uuid: ID): [Login!]!
-    memberships(uuid: ID): [GroupMembership!]!
+    groupsConnection: UserGroupsConnection
     watchlists(uuid: ID): [Watchlist!]!
+  }
+
+  type UserGroupsConnection implements Connection {
+    edges: [UserGroupsEdge!]!
+  }
+
+  type UserGroupsEdge implements Edge {
+    cursor: String!
+    node: Group!
+    permission_mask: Int!
   }
 
   type Login {
@@ -55,16 +80,19 @@ const typeDefs = `
     user: User
   }
 
-  type Group {
+  type Group implements Node {
     uuid: ID!
-    name: String
-    memberships(uuid: ID): [GroupMembership!]
+    name: String!
+    usersConnection(uuid: ID): GroupUsersConnection
   }
 
-  type GroupMembership {
-    permission_mask: Int!
-    group: Group!
-    user: User!
+  type GroupUsersConnection implements Connection {
+    edges: [GroupUsersEdge!]!
+  }
+
+  type GroupUsersEdge implements Edge {
+    cursor: String!
+    node: User!
   }
 
   type Query {

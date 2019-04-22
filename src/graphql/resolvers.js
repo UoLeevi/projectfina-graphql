@@ -99,6 +99,9 @@ export default {
     }
   },
   User: {
+    name(user, { uuid }, context, info) {
+      return `${user.first_name} ${user.last_name}`;
+    },
     async logins(user, { uuid }, context, info) {
       const res = await db.query(`
         SELECT l.*
@@ -109,8 +112,24 @@ export default {
         uuid ? [user.uuid, uuid] : [user.uuid]);
       return res.rows;
     },
-    async memberships(user, { uuid }, context, info) {
-      if (user.uuid === context.claims.sub) 
+    groupsConnection(user, { uuid }, context, info) {
+      return { user_uuid: user.uuid, type: "UserGroupsConnection" };
+    },
+    async watchlists(user, { uuid }, context, info) {
+      const res = await db.query(`
+        SELECT w.*
+          FROM watchlists w
+          LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
+          WHERE u_x_w.user_uuid = $1::uuid
+          ${ uuid ? 'AND w.uuid = $2::uuid' : '' };
+        `, 
+        uuid ? [user.uuid, uuid] : [user.uuid]);
+      return res.rows;
+    }
+  },
+  UserGroupsConnection: {
+    async edges(connection, args, context, info) {
+      if (connection.user_uuid === context.claims.sub) 
       {
         const res = await db.query(`
           SELECT u_x_g.*
@@ -118,8 +137,10 @@ export default {
             WHERE u_x_g.user_uuid = $1::uuid
             ${ uuid ? 'AND u_x_g.group_uuid = $2::uuid' : '' };
           `, 
-          uuid ? [user.uuid, uuid] : [user.uuid]);
-        return res.rows;
+          uuid 
+            ? [connection.user_uuid, uuid] 
+            : [connection.user_uuid]);
+        return res.rows.map(row => ({ ...row, type: "UserGroupsEdge" }));
       } 
       else
       {
@@ -132,20 +153,25 @@ export default {
             AND (my_u_x_g.permission_mask & B'00000010'::bit(8))::int != 0
             ${ uuid ? 'AND u_x_g.group_uuid = $3::uuid' : '' };
           `, 
-          uuid ? [user.uuid, context.claims.sub, uuid] : [user.uuid, context.claims.sub]);
-        return res.rows;
+          uuid 
+            ? [connection.user_uuid, context.claims.sub, uuid] 
+            : [connection.user_uuid, context.claims.sub]);
+          return res.rows.map(row => ({ ...row, type: "UserGroupsEdge" }));
       }
+    }
+  },
+  UserGroupsEdge: {
+    cursor(edge, args, context, info) {
+      return Buffer.from(`${edge.user_uuid},${edge.group_uuid}`).toString('base64');
     },
-    async watchlists(user, { uuid }, context, info) {
+    async node(edge, args, context, info) {
       const res = await db.query(`
-        SELECT w.*
-          FROM watchlists w
-          LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
-          WHERE u_x_w.user_uuid = $1::uuid
-          ${ uuid ? 'AND w.uuid = $2::uuid' : '' };
-        `, 
-        uuid ? [user.uuid, uuid] : [user.uuid]);
-      return res.rows;
+        SELECT g.*
+          FROM groups g
+          WHERE g.uuid = $1::uuid;
+        `,
+        [edge.group_uuid]);
+        return { ...res.rows[0], type: "Group" };
     }
   },
   Login: {
@@ -160,48 +186,59 @@ export default {
     }
   },
   Group: {
-    async memberships(group, { uuid }, context, info) {
+    async usersConnection(group, args, context, info) {
       const canRead = await db.query(`
         SELECT EXISTS(
-          SELECT 1 
-            FROM users_x_groups u_x_g
-            WHERE u_x_g.group_uuid = $1::uuid
-            AND u_x_g.user_uuid = $2::uuid
-            AND (u_x_g.permission_mask & B'00000010'::bit(8))::int != 0);
+          SELECT 1 FROM users_x_groups u_x_g
+          WHERE u_x_g.group_uuid = $1::uuid
+          AND u_x_g.user_uuid = $2:uuid
+          AND (u_x_g.permission_mask & B'00000010'::bit(8))::int != 0);
         `, 
         [group.uuid, context.claims.sub]);
-
-      if (!canRead)
-        return null;
-
+      return canRead ? { group_uuid: group.uuid, type: "GroupUsersConnection" } : null;
+    }
+  },
+  GroupUsersConnection: {
+    async edges(connection, { uuid }, context, info) {
       const res = await db.query(`
         SELECT u_x_g.*
           FROM users_x_groups u_x_g
           WHERE u_x_g.group_uuid = $1::uuid
           ${ uuid ? 'AND u_x_g.user_uuid = $2::uuid' : '' };
         `, 
-        uuid ? [group.uuid, uuid] : [group.uuid]);
-      return res.rows;
+        uuid 
+          ? [connection.group_uuid, uuid] 
+          : [connection.group_uuid]);
+        return res.rows.map(row => ({ ...row, type: "GroupUsersEdge" }));
     }
   },
-  GroupMembership: {
-    async user(user_x_group, args, context, info) {
+  GroupUsersEdge: {
+    cursor(edge, args, context, info) {
+      return Buffer.from(`${edge.group_uuid},${edge.user_uuid}`).toString('base64');
+    },
+    async node(edge, args, context, info) {
       const res = await db.query(`
         SELECT u.*
           FROM users u
           WHERE u.uuid = $1::uuid;
-        `, 
-        [user_x_group.user_uuid]);
-      return res.rows[0];
-    },
-    async group(user_x_group, args, context, info) {
-      const res = await db.query(`
-        SELECT g.*
-          FROM groups g
-          WHERE g.uuid = $1::uuid;
-        `, 
-        [user_x_group.group_uuid]);
-      return res.rows[0];
+        `,
+        [edge.user_uuid]);
+      return { ...res.rows[0], type: "User" };
+    }
+  },
+  Node: {
+    __resolveType(node, context, info) {
+      return node.type;
+    }
+  },
+  Connection: {
+    __resolveType(connection, context, info) {
+      return connection.type;
+    }
+  },
+  Edge: {
+    __resolveType(edge, context, info) {
+      return edge.type;
     }
   },
   Date: new GraphQLScalarType({

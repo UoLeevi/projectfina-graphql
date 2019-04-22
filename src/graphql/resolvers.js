@@ -171,10 +171,16 @@ export default {
       if (connection.user_uuid === context.claims.sub) 
       {
         const res = await db.query(`
-          SELECT u_x_w.*
-            FROM users_x_watchlists u_x_w
-            WHERE u_x_w.user_uuid = $1::uuid
-            ${ uuid ? 'AND u_x_w.watchlist_uuid = $2::uuid' : '' };
+          SELECT DISTINCT ON (w.uuid)
+            w.uuid watchlist_uuid,
+            u_x_w.permission_mask | u_x_g.permission_mask & g_x_w.permission_mask permission_mask
+            FROM watchlists w
+            LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
+            LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid
+            LEFT JOIN users_x_groups u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
+            WHERE u_x_w.user_uuid = $1::uuid OR u_x_g.user_uuid = $1::uuid
+            ${ uuid ? 'AND w.uuid = $2::uuid' : '' }
+            ORDER BY watchlist_uuid, permission_mask DESC;
           `, 
           uuid 
             ? [connection.user_uuid, uuid] 
@@ -184,13 +190,20 @@ export default {
       else
       {
         const res = await db.query(`
-          SELECT u_x_w.*
-            FROM users_x_watchlists u_x_w
-            JOIN users_x_watchlists my_u_x_w ON u_x_w.watchlist_uuid = my_u_x_w.watchlist_uuid
-            WHERE u_x_w.user_uuid = $1::uuid
-            AND my_u_x_w.user_uuid = $2::uuid
-            AND (my_u_x_w.permission_mask & B'00000010'::bit(8))::int != 0
-            ${ uuid ? 'AND u_x_w.watchlist_uuid = $2::uuid' : '' };
+          SELECT DISTINCT ON (w.uuid)
+            w.uuid watchlist_uuid,
+            u_x_w.permission_mask | u_x_g.permission_mask & g_x_w.permission_mask permission_mask
+            FROM watchlists w
+            LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
+            LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid
+            LEFT JOIN (
+              SELECT u_x_g.*
+                FROM users_x_groups u_x_g
+                WHERE u_x_g.user_uuid = $2::uuid
+              ) u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
+            WHERE u_x_w.user_uuid = $1::uuid OR u_x_g.user_uuid = $1::uuid
+            ${ uuid ? 'AND w.uuid = $3::uuid' : '' }
+            ORDER BY watchlist_uuid, permission_mask DESC;
           `, 
           uuid 
             ? [connection.user_uuid, context.claims.sub, uuid] 

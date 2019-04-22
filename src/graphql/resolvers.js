@@ -115,16 +115,8 @@ export default {
     groupsConnection(user, args, context, info) {
       return { user_uuid: user.uuid, type: "UserGroupsConnection" };
     },
-    async watchlists(user, { uuid }, context, info) {
-      const res = await db.query(`
-        SELECT w.*
-          FROM watchlists w
-          LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
-          WHERE u_x_w.user_uuid = $1::uuid
-          ${ uuid ? 'AND w.uuid = $2::uuid' : '' };
-        `, 
-        uuid ? [user.uuid, uuid] : [user.uuid]);
-      return res.rows;
+    watchlistsConnection(user, args, context, info) {
+      return { user_uuid: user.uuid, type: "UserWatchlistsConnection" };
     }
   },
   UserGroupsConnection: {
@@ -172,6 +164,53 @@ export default {
         `,
         [edge.group_uuid]);
         return { ...res.rows[0], type: "Group" };
+    }
+  },
+  UserWatchlistsConnection: {
+    async edges(connection, { uuid }, context, info) {
+      if (connection.user_uuid === context.claims.sub) 
+      {
+        const res = await db.query(`
+          SELECT u_x_w.*
+            FROM users_x_watchlists u_x_w
+            WHERE u_x_g.user_uuid = $1::uuid
+            ${ uuid ? 'AND u_x_w.watchlist_uuid = $2::uuid' : '' };
+          `, 
+          uuid 
+            ? [connection.user_uuid, uuid] 
+            : [connection.user_uuid]);
+        return res.rows.map(row => ({ ...row, type: "UserWatchlistsEdge" }));
+      } 
+      else
+      {
+        const res = await db.query(`
+          SELECT u_x_w.*
+            FROM users_x_watchlists u_x_w
+            JOIN users_x_watchlists my_u_x_w ON u_x_w.watchlist_uuid = my_u_x_w.watchlist_uuid
+            WHERE u_x_w.user_uuid = $1::uuid
+            AND my_u_x_w.user_uuid = $2::uuid
+            AND (my_u_x_w.permission_mask & B'00000010'::bit(8))::int != 0
+            ${ uuid ? 'AND u_x_w.watchlist_uuid = $2::uuid' : '' };
+          `, 
+          uuid 
+            ? [connection.user_uuid, context.claims.sub, uuid] 
+            : [connection.user_uuid, context.claims.sub]);
+          return res.rows.map(row => ({ ...row, type: "UserWatchlistsEdge" }));
+      }
+    }
+  },
+  UserWatchlistsEdge: {
+    cursor(edge, args, context, info) {
+      return Buffer.from(`${edge.user_uuid},${edge.watchlist_uuid}`).toString('base64');
+    },
+    async node(edge, args, context, info) {
+      const res = await db.query(`
+        SELECT w.*
+          FROM watchlists w
+          WHERE w.uuid = $1::uuid;
+        `,
+        [edge.watchlist_uuid]);
+        return { ...res.rows[0], type: "Watchlist" };
     }
   },
   Login: {

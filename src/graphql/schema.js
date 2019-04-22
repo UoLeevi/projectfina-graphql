@@ -25,10 +25,10 @@ const typeDefs = `
     instruments(uuid: ID): [Instrument!]!
   }
 
-  type Instrument {
+  type Instrument implements Node {
     uuid: ID!
-    symbol: String
-    name: String
+    symbol: String!
+    name: String!
     isin: String
     currency: String
     sector: String
@@ -36,9 +36,9 @@ const typeDefs = `
     eod_quotes(last: Int = 0, offset: Int = 0): [EodQuote!]
   }
 
-  type Watchlist {
+  type Watchlist implements Node {
     uuid: ID!
-    name: String
+    name: String!
     instruments(uuid: ID): [Instrument!]!
   }
 
@@ -61,7 +61,7 @@ const typeDefs = `
     last_name: String
     logins(uuid: ID): [Login!]!
     groupsConnection: UserGroupsConnection
-    watchlists(uuid: ID): [Watchlist!]!
+    watchlistsConnection: UserWatchlistsConnection
   }
 
   type UserGroupsConnection implements Connection {
@@ -71,6 +71,16 @@ const typeDefs = `
   type UserGroupsEdge implements Edge {
     cursor: String!
     node: Group!
+    permission_mask: Int!
+  }
+
+  type UserWatchlistsConnection implements Connection {
+    edges: [UserWatchlistsEdge!]!
+  }
+
+  type UserWatchlistsEdge implements Edge {
+    cursor: String!
+    node: Watchlist!
     permission_mask: Int!
   }
 

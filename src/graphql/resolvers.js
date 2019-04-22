@@ -173,7 +173,7 @@ export default {
         const res = await db.query(`
           SELECT u_x_w.*
             FROM users_x_watchlists u_x_w
-            WHERE u_x_g.user_uuid = $1::uuid
+            WHERE u_x_w.user_uuid = $1::uuid
             ${ uuid ? 'AND u_x_w.watchlist_uuid = $2::uuid' : '' };
           `, 
           uuid 

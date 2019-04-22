@@ -195,14 +195,14 @@ export default {
             u_x_w.permission_mask | u_x_g.permission_mask & g_x_w.permission_mask permission_mask
             FROM (
               SELECT DISTINCT ON (w.uuid)
-                w.uuid watchlist_uuid,
+                w.uuid,
                 u_x_w.permission_mask | u_x_g.permission_mask & g_x_w.permission_mask my_permission_mask
                 FROM watchlists w
                 LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
                 LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid
                 LEFT JOIN users_x_groups u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
                 WHERE u_x_w.user_uuid = $2::uuid OR u_x_g.user_uuid = $2::uuid
-                ORDER BY watchlist_uuid, my_permission_mask DESC
+                ORDER BY w.uuid, my_permission_mask DESC
               ) w
             LEFT JOIN users_x_watchlists u_x_w ON w.uuid = u_x_w.watchlist_uuid
             LEFT JOIN groups_x_watchlists g_x_w ON w.uuid = g_x_w.watchlist_uuid

@@ -57,7 +57,7 @@ export default {
         `, 
         [context.claims.sub, watchlist.name]);
 
-      const uuid = res.rows[0];
+      const uuid = res.rows[0].watchlist_uuid;
 
       res = await db.query(`
         SELECT w.* 

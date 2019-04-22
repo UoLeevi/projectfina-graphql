@@ -236,6 +236,18 @@ export default {
         `, 
         [group.uuid, context.claims.sub]);
       return canRead ? { group_uuid: group.uuid, type: "GroupUsersConnection" } : null;
+    },
+    async watchlistsConnection(group, args, context, info) {
+      const canRead = await db.query(`
+        SELECT EXISTS(
+          SELECT 1 
+          FROM users_x_groups u_x_g
+          WHERE u_x_g.group_uuid = $1::uuid
+          AND u_x_g.user_uuid = $2::uuid
+          AND (u_x_g.permission_mask & B'00000010'::bit(8))::int != 0);
+        `, 
+        [group.uuid, context.claims.sub]);
+      return canRead ? { group_uuid: group.uuid, type: "GroupWatchlistsConnection" } : null;
     }
   },
   GroupUsersConnection: {
@@ -264,6 +276,34 @@ export default {
         `,
         [edge.user_uuid]);
       return { ...res.rows[0], type: "User" };
+    }
+  },
+  GroupWatchlistsConnection: {
+    async edges(connection, { uuid }, context, info) {
+      const res = await db.query(`
+        SELECT g_x_w.*
+          FROM groups_x_watchlists g_x_w
+          WHERE g_x_w.group_uuid = $1::uuid
+          ${ uuid ? 'AND g_x_w.watchlist_uuid = $2::uuid' : '' };
+        `, 
+        uuid 
+          ? [connection.group_uuid, uuid] 
+          : [connection.group_uuid]);
+        return res.rows.map(row => ({ ...row, type: "GroupWatchlistsEdge" }));
+    }
+  },
+  GroupWatchlistsEdge: {
+    cursor(edge, args, context, info) {
+      return Buffer.from(`${edge.group_uuid},${edge.watchlist_uuid}`).toString('base64');
+    },
+    async node(edge, args, context, info) {
+      const res = await db.query(`
+        SELECT w.*
+          FROM watchlists w
+          WHERE w.uuid = $1::uuid;
+        `,
+        [edge.user_uuid]);
+      return { ...res.rows[0], type: "Watchlist" };
     }
   },
   Node: {

@@ -60,8 +60,8 @@ const typeDefs = `
     first_name: String
     last_name: String
     logins(uuid: ID): [Login!]!
-    groupsConnection: UserGroupsConnection
-    watchlistsConnection: UserWatchlistsConnection
+    groupsConnection(uuid: ID): UserGroupsConnection
+    watchlistsConnection(uuid: ID): UserWatchlistsConnection
   }
 
   type UserGroupsConnection implements Connection {
@@ -94,6 +94,7 @@ const typeDefs = `
     uuid: ID!
     name: String!
     usersConnection(uuid: ID): GroupUsersConnection
+    watchlistsConnection(uuid: ID): GroupWatchlistsConnection
   }
 
   type GroupUsersConnection implements Connection {
@@ -103,6 +104,16 @@ const typeDefs = `
   type GroupUsersEdge implements Edge {
     cursor: String!
     node: User!
+  }
+
+  type GroupWatchlistsConnection implements Connection {
+    edges: [GroupWatchlistsEdge!]!
+  }
+
+  type GroupWatchlistsEdge implements Edge {
+    cursor: String!
+    node: Watchlist!
+    permission_mask: Int!
   }
 
   type Query {

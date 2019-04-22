@@ -112,7 +112,7 @@ export default {
         uuid ? [user.uuid, uuid] : [user.uuid]);
       return res.rows;
     },
-    groupsConnection(user, { uuid }, context, info) {
+    groupsConnection(user, args, context, info) {
       return { user_uuid: user.uuid, type: "UserGroupsConnection" };
     },
     async watchlists(user, { uuid }, context, info) {
@@ -128,7 +128,7 @@ export default {
     }
   },
   UserGroupsConnection: {
-    async edges(connection, args, context, info) {
+    async edges(connection, { uuid }, context, info) {
       if (connection.user_uuid === context.claims.sub) 
       {
         const res = await db.query(`

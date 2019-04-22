@@ -199,7 +199,8 @@ export default {
             LEFT JOIN (
               SELECT u_x_g.*
                 FROM users_x_groups u_x_g
-                WHERE u_x_g.user_uuid = $2::uuid
+                JOIN users_x_groups my_u_x_g ON u_x_g.group_uuid = my_u_x_g.group_uuid
+                WHERE my_u_x_g.user_uuid = $2::uuid
               ) u_x_g ON g_x_w.group_uuid = u_x_g.group_uuid
             WHERE u_x_w.user_uuid = $1::uuid OR u_x_g.user_uuid = $1::uuid
             ${ uuid ? 'AND w.uuid = $3::uuid' : '' }

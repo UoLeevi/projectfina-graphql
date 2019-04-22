@@ -40,7 +40,7 @@ export default {
     },
   },
   Mutation: {
-    async createWatchlist(obj, { watchlistInput }, context, info) {
+    async createWatchlist(obj, { watchlist }, context, info) {
       if (!context.claims || !context.claims.sub)
         return null;
 
@@ -55,7 +55,7 @@ export default {
             FROM watchlist
             RETURNING watchlist_uuid;
         `, 
-        [context.claims.sub, watchlistInput.name]);
+        [context.claims.sub, watchlist.name]);
 
       const uuid = res.rows[0];
 

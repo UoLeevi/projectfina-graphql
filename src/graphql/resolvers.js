@@ -82,7 +82,7 @@ export default {
               WHERE w.uuid = $1::uuid
               AND w_u_p.user_uuid = $2::uuid
               AND w.uuid = w_u_p.watchlist_uuid
-              AND w_u_p.permission_mask & B'00010000'::bit(8))::int != 0
+              AND (w_u_p.permission_mask & B'00010000'::bit(8))::int != 0
               RETURNING *
             ) 
             SELECT COUNT(*) > 0 success

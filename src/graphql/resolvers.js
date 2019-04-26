@@ -67,7 +67,41 @@ export default {
         [uuid]);
 
       return res.rows[0];
+    },
+    async deleteWatchlist(obj, { uuid }, context, info) {
+      if (!context.claims || !context.claims.sub)
+        return {
+          success: false,
+          message: 'Unauthorized'
+        };
+
+        let res = await db.query(`
+          WITH deleted AS (
+            DELETE FROM watchlists w 
+              USING watchlist_user_permissions w_u_p
+              WHERE w.uuid = $1::uuid
+              AND w_u_p.user_uuid = $2:uuid
+              AND w.uuid = w_u_p.watchlist_uuid
+              AND w_u_p.permission_mask & B'00010000'::bit(8))::int != 0
+              RETURNING *
+            ) 
+            SELECT COUNT(*) > 0 success
+              FROM deleted;
+        `, 
+        [uuid, context.claims.sub]);
+
+        const success = res.rows[0].success;
+
+        return {
+          success,
+          message: success 
+            ? 'Delete successful' 
+            : 'Nothing was deleted'
+        };
     }
+  },
+  SuccessMessage: {
+
   },
   Market: {
     async instruments(market, { uuid }, context, info) {
@@ -201,18 +235,10 @@ export default {
       if (connection.user_uuid === context.claims.sub) 
       {
         const res = await db.query(`
-          SELECT DISTINCT ON (w.watchlist_uuid, w.user_uuid)
-            w.watchlist_uuid, w.user_uuid, w.permission_mask
-            FROM (
-              (SELECT g_x_w.watchlist_uuid, u_x_g.user_uuid, u_x_g.permission_mask & g_x_w.permission_mask permission_mask
-                FROM users_x_groups u_x_g
-                JOIN groups_x_watchlists g_x_w ON u_x_g.group_uuid = g_x_w.group_uuid)
-              UNION ALL
-              (SELECT u_x_w.watchlist_uuid, u_x_w.user_uuid, u_x_w.permission_mask
-                FROM users_x_watchlists u_x_w)) w
+          SELECT *
+            FROM watchlist_user_permissions w
             WHERE w.user_uuid = $1::uuid
-            ${ uuid ? 'AND w.uuid = $2::uuid' : '' }
-            ORDER BY w.watchlist_uuid, w.user_uuid, w.permission_mask DESC;
+            ${ uuid ? 'AND w.uuid = $2::uuid' : '' };
           `, 
           uuid 
             ? [connection.user_uuid, uuid] 
@@ -238,17 +264,9 @@ export default {
               (SELECT u_x_w.watchlist_uuid, u_x_w.user_uuid, u_x_w.permission_mask
                 FROM users_x_watchlists u_x_w)) w
             JOIN (
-              SELECT DISTINCT ON (w.watchlist_uuid, w.user_uuid)
-                w.watchlist_uuid, w.user_uuid, w.permission_mask
-                FROM (
-                  (SELECT g_x_w.watchlist_uuid, u_x_g.user_uuid, u_x_g.permission_mask & g_x_w.permission_mask permission_mask
-                    FROM users_x_groups u_x_g
-                    JOIN groups_x_watchlists g_x_w ON u_x_g.group_uuid = g_x_w.group_uuid)
-                  UNION ALL
-                  (SELECT u_x_w.watchlist_uuid, u_x_w.user_uuid, u_x_w.permission_mask
-                    FROM users_x_watchlists u_x_w)) w
+              SELECT w.watchlist_uuid, w.user_uuid, w.permission_mask
+                FROM watchlist_user_permissions w
                 WHERE w.user_uuid = $2::uuid
-                ORDER BY w.watchlist_uuid, w.user_uuid, w.permission_mask DESC
               ) my_w ON w.watchlist_uuid = my_w.watchlist_uuid
             WHERE w.user_uuid = $1::uuid
             AND (my_w.permission_mask & B'00000011'::bit(8))::int != 0

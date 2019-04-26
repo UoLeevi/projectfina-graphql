@@ -18,6 +18,11 @@ const typeDefs = `
     node: Node!
   }
 
+  type SuccessMessage {
+    success: Boolean!
+    message: String!
+  }
+
   type Market {
     uuid: ID!
     name: String
@@ -128,6 +133,7 @@ const typeDefs = `
 
   type Mutation {
     createWatchlist(watchlist: WatchlistInput!): Watchlist
+    deleteWatchlist(uuid: ID!): SuccessMessage!
   }
 `;
 

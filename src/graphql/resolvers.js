@@ -141,6 +141,50 @@ export default {
           ? 'Instrument added successfully' 
           : 'Nothing was inserted'
       };
+    },
+    async removeFromWatchlist(obj, { watchlist_uuid, instrument_uuid }, context, info) {
+      if (!context.claims || !context.claims.sub)
+        return {
+          success: false,
+          message: 'Unauthorized'
+        };
+
+      const canEdit = await db.query(`
+        SELECT EXISTS(
+          SELECT 1 
+          FROM watchlist_user_permissions w_u_p
+          WHERE w_u_p.watchlist_uuid = $1::uuid
+          AND w_u_p.user_uuid = $2::uuid
+          AND (w_u_p.permission_mask & B'00001000'::bit(8))::int != 0);
+        `, 
+        [watchlist_uuid, context.claims.sub]);
+
+      if (!canEdit)
+        return {
+          success: false,
+          message: 'Not allowed'
+        };
+
+      const res = await db.query(`
+        WITH removed AS (
+          DELETE FROM instruments_x_watchlists i_x_w
+            WHERE i_x_w.instrument_uuid = $1::uuid
+            AND i_x_w.watchlist_uuid = $2::uuid
+            RETURNING *
+          ) 
+          SELECT COUNT(*) > 0 success
+            FROM removed;
+        `, 
+        [instrument_uuid, watchlist_uuid]);
+
+      const success = res.rows[0].success;
+
+      return {
+        success,
+        message: success 
+          ? 'Instrument added successfully' 
+          : 'Nothing was inserted'
+      };
     }
   },
   SuccessMessage: {

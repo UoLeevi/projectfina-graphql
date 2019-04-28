@@ -135,6 +135,7 @@ const typeDefs = `
     createWatchlist(watchlist: WatchlistInput!): Watchlist
     deleteWatchlist(watchlist_uuid: ID!): SuccessMessage!
     addToWatchlist(instrument_uuid: ID!, watchlist_uuid: ID!): SuccessMessage!
+    removeFromWatchlist(instrument_uuid: ID!, watchlist_uuid: ID!): SuccessMessage!
   }
 `;
 

@@ -133,7 +133,8 @@ const typeDefs = `
 
   type Mutation {
     createWatchlist(watchlist: WatchlistInput!): Watchlist
-    deleteWatchlist(uuid: ID!): SuccessMessage!
+    deleteWatchlist(watchlist_uuid: ID!): SuccessMessage!
+    addToWatchlist(instrument_uuid: ID!, watchlist_uuid: ID!): SuccessMessage!
   }
 `;
 

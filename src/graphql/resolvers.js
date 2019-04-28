@@ -68,14 +68,14 @@ export default {
 
       return res.rows[0];
     },
-    async deleteWatchlist(obj, { uuid }, context, info) {
+    async deleteWatchlist(obj, { watchlist_uuid }, context, info) {
       if (!context.claims || !context.claims.sub)
         return {
           success: false,
           message: 'Unauthorized'
         };
 
-        let res = await db.query(`
+        const res = await db.query(`
           WITH deleted AS (
             DELETE FROM watchlists w 
               USING watchlist_user_permissions w_u_p
@@ -87,8 +87,8 @@ export default {
             ) 
             SELECT COUNT(*) > 0 success
               FROM deleted;
-        `, 
-        [uuid, context.claims.sub]);
+          `, 
+          [watchlist_uuid, context.claims.sub]);
 
         const success = res.rows[0].success;
 
@@ -98,6 +98,49 @@ export default {
             ? 'Delete successful' 
             : 'Nothing was deleted'
         };
+    },
+    async addToWatchlist(obj, { watchlist_uuid, instrument_uuid }, context, info) {
+      if (!context.claims || !context.claims.sub)
+        return {
+          success: false,
+          message: 'Unauthorized'
+        };
+
+      const canEdit = await db.query(`
+        SELECT EXISTS(
+          SELECT 1 
+          FROM watchlist_user_permissions w_u_p
+          WHERE w_u_p.watchlist_uuid = $1::uuid
+          AND w_u_p.user_uuid = $2::uuid
+          AND (w_u_p.permission_mask & B'00001000'::bit(8))::int != 0);
+        `, 
+        [watchlist_uuid, context.claims.sub]);
+
+      if (!canEdit)
+        return {
+          success: false,
+          message: 'Not allowed'
+        };
+
+      const res = await db.query(`
+        WITH inserted AS (
+          INSERT INTO instruments_x_watchlists i_x_w (instrument_uuid, watchlist_uuid)
+            VALUES ($1::uuid, $2::uuid) ON CONFLICT DO NOTHING
+            RETURNING *
+          ) 
+          SELECT COUNT(*) > 0 success
+            FROM inserted;
+        `, 
+        [instrument_uuid, watchlist_uuid]);
+
+      const success = res.rows[0].success;
+
+      return {
+        success,
+        message: success 
+          ? 'Instrument added successfully' 
+          : 'Nothing was inserted'
+      };
     }
   },
   SuccessMessage: {

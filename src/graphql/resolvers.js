@@ -124,7 +124,7 @@ export default {
 
       const res = await db.query(`
         WITH inserted AS (
-          INSERT INTO instruments_x_watchlists i_x_w (instrument_uuid, watchlist_uuid)
+          INSERT INTO instruments_x_watchlists (instrument_uuid, watchlist_uuid)
             VALUES ($1::uuid, $2::uuid) ON CONFLICT DO NOTHING
             RETURNING *
           ) 

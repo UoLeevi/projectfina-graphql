@@ -39,6 +39,17 @@ const typeDefs = `
     sector: String
     market: Market!
     eod_quotes(last: Int = 0, offset: Int = 0): [EodQuote!]
+    notesConnection(watchlist_uuid: ID): InstrumentNotesConnection
+  }
+
+  type InstrumentNotesConnection implements Connection {
+    edges: [InstrumentNotesEdge!]!
+  }
+
+  type InstrumentNotesEdge implements Edge {
+    cursor: String!
+    node: Note!
+    permission_mask: Int!
   }
 
   type Watchlist implements Node {
@@ -125,6 +136,14 @@ const typeDefs = `
     permission_mask: Int!
   }
 
+  type Note implements Node {
+    uuid: ID!
+    name: String!
+    body: String!
+    created_by: User!
+    created: Date!
+  }
+
   type Query {
     instruments(uuid: ID): [Instrument!]!
     markets(uuid: ID, mic: String): [Market!]!
@@ -136,6 +155,7 @@ const typeDefs = `
     deleteWatchlist(watchlist_uuid: ID!): SuccessMessage!
     addToWatchlist(instrument_uuid: ID!, watchlist_uuid: ID!): SuccessMessage!
     removeFromWatchlist(instrument_uuid: ID!, watchlist_uuid: ID!): SuccessMessage!
+    createNote(instrument_uuid: ID!, watchlist_uuid: ID, body: String!): Note
   }
 `;
 

@@ -262,7 +262,7 @@ export default {
               WHERE w.user_uuid = $1::uuid
               AND (w.permission_mask & B'00000011'::bit(8))::int != 0)) n
             WHERE n.instrument_uuid = $2::uuid
-            ${ watchlist_uuid ? 'AND n.watchlist_uuid = $3::uuid' : '' };
+            ${ watchlist_uuid ? 'AND n.watchlist_uuid = $3::uuid' : '' }
           ORDER BY n.note_uuid, n.permission_mask DESC;
         `, 
         watchlist_uuid

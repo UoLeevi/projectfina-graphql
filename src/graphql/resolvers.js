@@ -187,7 +187,61 @@ export default {
       };
     },
     async createNote(obj, { instrument_uuid, watchlist_uuid, body }, context, info) {
-      //TODO
+      if (!context.claims || !context.claims.sub)
+        return {
+          success: false,
+          message: 'Unauthorized'
+        };
+
+      if (watchlist_uuid) {
+        const canEdit = await db.query(`
+          SELECT EXISTS(
+            SELECT 1 
+            FROM watchlist_user_permissions w_u_p
+            WHERE w_u_p.watchlist_uuid = $1::uuid
+            AND w_u_p.user_uuid = $2::uuid
+            AND (w_u_p.permission_mask & B'00001000'::bit(8))::int != 0);
+          `, 
+          [watchlist_uuid, context.claims.sub]);
+
+        if (!canEdit)
+          return {
+            success: false,
+            message: 'Not allowed'
+          };
+      }
+
+      let res = await db.query(`
+        WITH note AS (
+          INSERT INTO notes (body, created_by_user_uuid) 
+            VALUES ($2::text, $1::uuid) 
+            RETURNING *
+          )
+          ${watchlist_uuid 
+            ? `
+              INSERT INTO notes_x_instruments_x_watchlists (note_uuid, instrument_uuid, watchlist_uuid)
+                SELECT uuid, $3::uuid, $4::uuid
+                FROM note
+                RETURNING note_uuid` 
+            : `
+              INSERT INTO notes_x_instruments (note_uuid, instrument_uuid)
+                SELECT uuid, $3::uuid
+                FROM note
+                RETURNING note_uuid` 
+            };
+        `, 
+        watchlist_uuid 
+          ? [context.claims.sub, body, instrument_uuid, watchlist_uuid]
+          : [context.claims.sub, body, instrument_uuid]);
+
+      const success = !!res.rows[0].note_uuid;
+
+      return {
+        success,
+        message: success 
+          ? 'Note created successfully' 
+          : 'Unable to create note'
+      }
     }
   },
   SuccessMessage: {
@@ -566,6 +620,6 @@ export default {
         return new Date(ast.value);
 
       return null;
-    },
+    }
   })
 };

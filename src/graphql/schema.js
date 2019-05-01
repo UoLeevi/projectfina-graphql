@@ -49,7 +49,6 @@ const typeDefs = `
   type InstrumentNotesEdge implements Edge {
     cursor: String!
     node: Note!
-    permission_mask: Int!
   }
 
   type Watchlist implements Node {

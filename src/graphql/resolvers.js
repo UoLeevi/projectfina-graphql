@@ -303,21 +303,21 @@ export default {
     async edges(connection, { watchlist_uuid }, context, info) {
       const res = await db.query(`
         SELECT DISTINCT ON (n.note_uuid)
-          n.note_uuid, n.instrument_uuid, n.watchlist_uuid, n.permission_mask
+          n.note_uuid, n.instrument_uuid, n.watchlist_uuid
           FROM (
-            (SELECT n_x_i.note_uuid, n_x_i.instrument_uuid, NULL watchlist_uuid, B'11111111'::bit(8) permission_mask
+            (SELECT n_x_i.note_uuid, n_x_i.instrument_uuid, NULL watchlist_uuid
               FROM notes_x_instruments n_x_i
               JOIN notes n ON n.uuid = n_x_i.note_uuid
               WHERE n.created_by_user_uuid = $1::uuid)
             UNION ALL
-            (SELECT n_x_i_x_w.note_uuid, n_x_i_x_w.instrument_uuid, n_x_i_x_w.watchlist_uuid, w.permission_mask
+            (SELECT n_x_i_x_w.note_uuid, n_x_i_x_w.instrument_uuid, n_x_i_x_w.watchlist_uuid
               FROM notes_x_instruments_x_watchlists n_x_i_x_w
               JOIN watchlist_user_permissions w ON w.watchlist_uuid = n_x_i_x_w.watchlist_uuid
               WHERE w.user_uuid = $1::uuid
               AND (w.permission_mask & B'00000011'::bit(8))::int != 0)) n
             WHERE n.instrument_uuid = $2::uuid
             ${ watchlist_uuid ? 'AND n.watchlist_uuid = $3::uuid' : '' }
-          ORDER BY n.note_uuid, n.permission_mask DESC;
+          ORDER BY n.note_uuid, n.watchlist_uuid;
         `, 
         watchlist_uuid
           ? [context.claims.sub, connection.instrument_uuid, watchlist_uuid] 
@@ -488,7 +488,7 @@ export default {
     async user(login, args, context, info) {
       const res = await db.query(`
         SELECT u.*
-          FROM user u
+          FROM users u
           WHERE u.uuid = $1::uuid;
         `, 
         [login.user_uuid]);
@@ -584,7 +584,7 @@ export default {
     async created_by(note, args, context, info) {
       const res = await db.query(`
         SELECT u.*
-          FROM user u
+          FROM users u
           WHERE u.uuid = $1::uuid;
         `, 
         [note.created_by_user_uuid]);

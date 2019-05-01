@@ -242,6 +242,34 @@ export default {
           ? 'Note created successfully' 
           : 'Unable to create note'
       }
+    },
+    async deleteNote(obj, { note_uuid }, context, info) {
+      if (!context.claims || !context.claims.sub)
+        return {
+          success: false,
+          message: 'Unauthorized'
+        };
+
+        const res = await db.query(`
+          WITH deleted AS (
+            DELETE FROM notes n 
+              WHERE n.uuid = $1::uuid
+              AND n.created_by_user_uuid = $2::uuid
+              RETURNING *
+            ) 
+            SELECT COUNT(*) > 0 success
+              FROM deleted;
+          `, 
+          [note_uuid, context.claims.sub]);
+
+        const success = res.rows[0].success;
+
+        return {
+          success,
+          message: success 
+            ? 'Delete successful' 
+            : 'Nothing was deleted'
+        };
     }
   },
   SuccessMessage: {

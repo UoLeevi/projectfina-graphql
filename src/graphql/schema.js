@@ -155,7 +155,7 @@ const typeDefs = `
     deleteWatchlist(watchlist_uuid: ID!): SuccessMessage!
     addToWatchlist(instrument_uuid: ID!, watchlist_uuid: ID!): SuccessMessage!
     removeFromWatchlist(instrument_uuid: ID!, watchlist_uuid: ID!): SuccessMessage!
-    createNote(instrument_uuid: ID!, watchlist_uuid: ID, body: String!): Note
+    createNote(instrument_uuid: ID!, watchlist_uuid: ID, body: String!): SuccessMessage!
   }
 `;
 
